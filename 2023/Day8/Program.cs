@@ -146,6 +146,8 @@ namespace Day8
 
             Console.WriteLine();
 
+            // This alternative solution also works, but is slow
+            //
             //var currZvalues = new long[keysArr.Length];
             //int writeIx = 0;
             //while (true)
