@@ -43,7 +43,7 @@ namespace Day10
                 ix++;
             }
 
-            //Part1(start, connPoints);
+            Part1(start, connPoints);
 
             // Part 2
             Part2(start, connPoints);
@@ -76,16 +76,16 @@ namespace Day10
             var maxMap = new Point() { Row = connPoints.Count() * 3, Col = connPoints[0].Count() * 3 };
             var max = new Point() { Row = connPoints.Count(), Col = connPoints[0].Count() };
 
-            PrintMap(map, maxMap.Row, maxMap.Col);
-            Console.WriteLine();
+            //PrintMap(map, maxMap.Row, maxMap.Col);
+            //Console.WriteLine();
 
             FillOuter(map, maxMap, 'o');
             FillEmpty(map, maxMap, 'i');
-            PrintMap(map, maxMap.Row, maxMap.Col);
+            //PrintMap(map, maxMap.Row, maxMap.Col);
 
             //Console.WriteLine($"Part 2: {map[new Point() { Row=0, Col=0}]}");
-            Console.WriteLine($"Part 2 mapped: {map.Values.Count()}");
-            Console.WriteLine($"Part 2 #: {maxMap.Row * maxMap.Row}");
+            //Console.WriteLine($"Part 2 mapped: {map.Values.Count()}");
+            //Console.WriteLine($"Part 2 #: {maxMap.Row * maxMap.Row}");
             Console.WriteLine($"{max} {maxMap}");
             Console.WriteLine($"Part 2 result: {CountFullSquares(map, 'i', max)}");
         }
@@ -226,8 +226,8 @@ namespace Day10
                 reverse = GetNextPoint(reverse, prevReverse, connPoints);
                 prevForward = savedForward;
                 prevReverse = savedReverse;
-                Console.WriteLine($"Curr forward: {forward}");
-                Console.WriteLine($"Curr reverse: {reverse}");
+                //Console.WriteLine($"Curr forward: {forward}");
+                //Console.WriteLine($"Curr reverse: {reverse}");
                 steps++;
             }
 
