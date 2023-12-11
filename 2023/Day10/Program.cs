@@ -53,6 +53,7 @@ namespace Day10
         static void Part2(Point start, List<List<string>> connPoints)
         {
             var forward = GetNextPoint(start, start, connPoints);
+            var startDirection = GetDirection(forward.Subtract(start));
             var steps = 1;
 
             Console.WriteLine($"Start: {start}");
@@ -62,122 +63,126 @@ namespace Day10
             var prevForward = start;
             while (!forward.Equals(start))
             {
-                map[forward] = '#';
+                AddImgToMap(map, forward, connPoints[forward.Row][forward.Col]);
                 var savedForward = forward;
                 forward = GetNextPoint(forward, prevForward, connPoints);
                 prevForward = savedForward;
                 //Console.WriteLine($"Curr forward: {forward}");
                 steps++;
             }
-            map[start] = '#';
+            var endDirection = GetDirection(forward.Subtract(prevForward));
+            AddImgToMap(map, forward, endDirection.Substring(1, 1) + startDirection.Substring(0, 1));
 
-            PrintMap(map, connPoints.Count(), connPoints[0].Count());
+            var maxMap = new Point() { Row = connPoints.Count() * 3, Col = connPoints[0].Count() * 3 };
+            var max = new Point() { Row = connPoints.Count(), Col = connPoints[0].Count() };
+
+            PrintMap(map, maxMap.Row, maxMap.Col);
             Console.WriteLine();
 
-            var max = new Point() { Row = connPoints.Count(), Col = connPoints[0].Count() };
-            forward = start;
-            prevForward = forward;
-            forward = GetNextPoint(forward, prevForward, connPoints);
-            MarkLeftAndRight(map, prevForward, forward, max);
-            while (!forward.Equals(start))
-            {
-                var savedForward = forward;
-                forward = GetNextPoint(forward, prevForward, connPoints);
-                prevForward = savedForward;
-                MarkLeftAndRight(map, prevForward, forward, max);
-                //PrintMap(map, max.Row, max.Col);
-                //Console.WriteLine();
-            }
-
-
-            PrintMap(map, max.Row, max.Col);
+            FillOuter(map, maxMap, 'o');
+            FillEmpty(map, maxMap, 'i');
+            PrintMap(map, maxMap.Row, maxMap.Col);
 
             //Console.WriteLine($"Part 2: {map[new Point() { Row=0, Col=0}]}");
-            Console.WriteLine($"Part 2 L: {map.Values.Where(x => x == 'L').Count()}");
-            Console.WriteLine($"Part 2 R: {map.Values.Where(x => x == 'R').Count()}");
-            Console.WriteLine($"Part 2 #: {map.Values.Where(x => x == '#').Count()}");
-            Console.WriteLine($"Part 2 #: {map.Values.Count()}");
-            Console.WriteLine($"Part 2 #: {max.Row * max.Row}");
+            Console.WriteLine($"Part 2 mapped: {map.Values.Count()}");
+            Console.WriteLine($"Part 2 #: {maxMap.Row * maxMap.Row}");
+            Console.WriteLine($"{max} {maxMap}");
+            Console.WriteLine($"Part 2 result: {CountFullSquares(map, 'i', max)}");
         }
 
-        static void MarkLeftAndRight(Dictionary<Point, char> map, Point prev, Point curr, Point max)
+        static int CountFullSquares(Dictionary<Point, char> map, char ch, Point max)
         {
-            var diff = curr.Subtract(prev);
-            switch (diff.Row, diff.Col)
+            var count = 0;
+            for (var r = 0; r < max.Row; r++)
             {
-                case (1, 0):
-                    MarkArea(map, new Point { Row = curr.Row, Col = curr.Col + 1 }, 'L', max);
-                    MarkArea(map, new Point { Row = curr.Row, Col = curr.Col - 1 }, 'R', max);
-                    break;
-                case (-1, 0):
-                    MarkArea(map, new Point { Row = curr.Row, Col = curr.Col + 1 }, 'R', max);
-                    MarkArea(map, new Point { Row = curr.Row, Col = curr.Col - 1 }, 'L', max);
-                    break;
-                case (0, 1):
-                    MarkArea(map, new Point { Row = curr.Row - 1, Col = curr.Col }, 'L', max);
-                    MarkArea(map, new Point { Row = curr.Row + 1, Col = curr.Col }, 'R', max);
-                    break;
-                case (0, -1):
-                    MarkArea(map, new Point { Row = curr.Row - 1, Col = curr.Col }, 'R', max);
-                    MarkArea(map, new Point { Row = curr.Row + 1, Col = curr.Col }, 'L', max);
-                    break;
-                default:
-                    throw new Exception("Unknown direction");
-
-            }
-
-            var points = new List<Point> { new Point(0, 1), new Point(1, 1), new Point(1, 0), new Point(1, -1), 
-                new Point(0, -1), new Point(-1, -1), new Point(-1, 0), new Point(-1, 1)};
-            points.AddRange(points);
-            var currCh = '#';
-            foreach (var d in points)
-            {
-                if (map.TryGetValue(curr.Add(d), out char ch))
+                for (var c = 0; c < max.Col; c++)
                 {
-                    currCh = ch;
-                }
-                else if (currCh != '#')
-                {
-                    MarkArea(map, curr.Add(d), currCh, max);
+                    var found = true;
+                    for (var dr = 0; dr < 3; dr++)
+                    {
+                        for (var dc = 0; dc < 3; dc++)
+                        {
+                            if (map[new Point(r * 3 + dr, c * 3 + dc)] != ch)
+                            {
+                                found = false;
+                            }
+                        }
+                    }
+
+                    if (found) count++;
                 }
             }
-
-            points.Reverse();
-            foreach (var d in points)
-            {
-                if (map.TryGetValue(curr.Add(d), out char ch))
-                {
-                    currCh = ch;
-                }
-                else if (currCh != '#')
-                {
-                    map[curr.Add(d)] = currCh;
-                }
-            }
-
+            return count;
         }
 
-        static void MarkArea(Dictionary<Point, char> map, Point curr, char ch, Point max)
+        static void FillEmpty(Dictionary<Point, char> map, Point max, char ch)
         {
-            if (curr.Row < 0 || curr.Row >= max.Row || curr.Col < 0 || curr.Col >= max.Col)
-                return;
-            if (map.ContainsKey(curr) && map[curr] == '#')
-                return;
-            var points = new Point[] { 
-                new Point() { Row = curr.Row + 1, Col = curr.Col },
-                new Point() { Row = curr.Row - 1, Col = curr.Col },
-                new Point() { Row = curr.Row, Col = curr.Col + 1 },
-                new Point() { Row = curr.Row, Col = curr.Col - 1}
+            for (var r = 0; r < max.Row; r++)
+            {
+                for (var c = 0; c < max.Col; c++)
+                {
+                    var p = new Point(r, c);
+                    if (!map.ContainsKey(p))
+                        map[p] = ch;
+                }
+            }
+        }
+
+        static void FillOuter(Dictionary<Point, char> map, Point max,char ch)
+        {
+            for (var r = 0; r < max.Row; r++)
+            {
+                FillAdjacent(map, new Point(r, 0), max, ch);
+                FillAdjacent(map, new Point(r, max.Col - 1), max, ch);
+            }
+            for (var c = 0; c < max.Col; c++)
+            {
+                FillAdjacent(map, new Point(0, c), max, ch);
+                FillAdjacent(map, new Point(max.Row - 1, c), max, ch);
+            }
+        }
+
+        static void FillAdjacent(Dictionary<Point, char> map, Point pos, Point max, char ch)
+        {
+            var directions = new Point[]
+            {
+                new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0)
+                //new Point(1, 1), new Point(1, -1), new Point(-1, 1), new Point(-1, 1)
             };
-            if (!map.ContainsKey(curr))
-            {
-                map[curr] = ch;
-            }
+            if (!IsWithinBounds(pos, max) || map.ContainsKey(pos))
+                return;
 
-            foreach (var p in points)
+            var stack = new Stack<Point>();
+            stack.Push(pos);
+
+            while (stack.Any())
             {
-                if (!map.ContainsKey(p))
-                    MarkArea(map, p, ch, max);
+                var p = stack.Pop();
+                map[p] = ch;
+                foreach (var direction in directions)
+                {
+                    var newPos = p.Add(direction);
+                    if (!map.ContainsKey(newPos) && IsWithinBounds(newPos, max))
+                        stack.Push(newPos);
+                }
+            }
+        }
+
+        static bool IsWithinBounds(Point pos, Point max)
+        {
+            return pos.Row >= 0 && pos.Col >= 0 && pos.Row < max.Row && pos.Col < max.Col;
+        }
+
+        static void AddImgToMap(Dictionary<Point, char> map, Point pos, string connType)
+        {
+            var img = GetImg(connType);
+            for (var r = 0; r < img.Length; r++)
+            {
+                for (var c = 0; c < img[r].Length; c++)
+                {
+                    if (img[r][c] != '.')
+                        map[new Point(pos.Row*3 + r, pos.Col*3 + c)] = img[r][c];
+                }
             }
         }
 
@@ -304,7 +309,51 @@ namespace Day10
                 default:
                     throw new Exception("Unknown input");
             }
+        }
 
+        static char[][] GetImg(string connType)
+        {
+            switch (connType)
+            {
+                case "NS":
+                    return new char[][] { 
+                        new char[] { '.', '|', '.'},
+                        new char[] { '.', '|', '.'},
+                        new char[] { '.', '|', '.'}
+                    };
+                case "EW":
+                    return new char[][] {
+                        new char[] { '.', '.', '.'},
+                        new char[] { '-', '-', '-'},
+                        new char[] { '.', '.', '.'}
+                    };
+                case "NE":
+                    return new char[][] {
+                        new char[] { '.', '|', '.'},
+                        new char[] { '.', '*', '-'},
+                        new char[] { '.', '.', '.'}
+                    };
+                case "NW":
+                    return new char[][] {
+                        new char[] { '.', '|', '.'},
+                        new char[] { '-', '*', '.'},
+                        new char[] { '.', '.', '.'}
+                    };
+                case "SW":
+                    return new char[][] {
+                        new char[] { '.', '.', '.'},
+                        new char[] { '-', '*', '.'},
+                        new char[] { '.', '|', '.'}
+                    };
+                case "SE":
+                    return new char[][] {
+                        new char[] { '.', '.', '.'},
+                        new char[] { '.', '*', '-'},
+                        new char[] { '.', '|', '.'}
+                    };
+                default:
+                    throw new Exception("Unknown input");
+            }
         }
 
         static void WriteColored(string text, string coloredWord, ConsoleColor color = ConsoleColor.Green)
@@ -350,17 +399,19 @@ namespace Day10
         }
 
         private static string testData2 =
-@"...........
-.S-------7.
-.|F-----7|.
-.||.....||.
-.||.....||.
-.|L-7.F-J|.
-.|..|.|..|.
-.L--J.L--J.
-...........";
+@"FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L";
 
-        private static string testData = @"7-F7-
+        private static string testData = 
+@"7-F7-
 .FJ|7
 SJLL7
 |F--J
